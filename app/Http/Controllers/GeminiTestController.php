@@ -32,6 +32,7 @@ class GeminiTestController extends Controller
                     'model' => $model,
                     'prompt' => $prompt,
                     'text' => $result->text(),
+                    'result' => $result,
                 ]
             );
         } catch (\Throwable $e) {
