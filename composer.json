@@ -9,6 +9,7 @@
         "php": "^8.4.1",
         "dedoc/scramble": "^0.13.35",
         "google-gemini-php/laravel": "*",
+        "laravel/ai": "^1.0",
         "laravel/framework": "^13.8",
         "laravel/sanctum": "^4.0",
         "laravel/tinker": "^3.0",
