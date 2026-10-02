@@ -3,6 +3,8 @@
 use App\Ai\Agents\TestAgent;
 use App\Ai\Agents\TestTeachAgent;
 use App\Ai\ModelJson;
+use App\Lessons\LessonResponse;
+use App\Lessons\TeachTurnRecorder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -70,13 +72,20 @@ Route::middleware(['auth:sanctum'])->group(function() {
             'reply' => (string) $response,
         ];
     });
-    Route::post('/test-teach', function (Request $request) {
+    Route::post('/test-teach', function (Request $request, TeachTurnRecorder $recorder) {
         $request->validate([
             'prompt' => 'required|string',
             'conversation_id' => 'nullable|string',
+            'workspace_id' => 'nullable|integer',
         ]);
 
         $user = $request->user();
+
+        // Resolved before the model call, so a bad id costs no model credit. Without one,
+        // the first lesson turn creates a workspace; send its id back on later turns.
+        $workspace = $request->workspace_id
+            ? $user->workspaces()->findOrFail($request->workspace_id)
+            : null;
 
         $agent = $request->conversation_id
             ? TestTeachAgent::make()->continue($request->conversation_id, as: $user)
@@ -109,10 +118,11 @@ Route::middleware(['auth:sanctum'])->group(function() {
             $structured = $decoded;
         }
 
-        // Synthesize a frontend-shaped lesson contract from the AI draft.
-        // IDs don't exist anywhere yet (no workspaces table), so resourceId 1
-        // is minted in-route and recall secrets are stripped like production.
+        // Synthesize a frontend-shaped lesson contract from the AI draft. This
+        // preview mints resourceId 1 and strips recall secrets like production;
+        // once the lesson is stored below, the stored lesson replaces it.
         $lesson = null;
+        $lessonDraft = null;
         $terms = (object) [];
         $resources = (object) [];
         $validationWarnings = [];
@@ -142,6 +152,9 @@ Route::middleware(['auth:sanctum'])->group(function() {
                     $validationWarnings[] = 'Lesson must contain at least one block.';
                     $blocks = [];
                 }
+
+                // Kept before the secrets are stripped: the stored lesson needs them for grading.
+                $lessonDraft = [...$draft, 'blocks' => $blocks];
 
                 $allowedBlocks = ['heading', 'paragraph', 'callout', 'code', 'table', 'steps', 'quiz', 'recall'];
                 $hasQuiz = false;
@@ -274,10 +287,36 @@ Route::middleware(['auth:sanctum'])->group(function() {
             }
         }
 
+        // A lesson turn means the interview is over: store the mission it captured, and
+        // the lesson if it passed every check. A lesson with warnings stays a preview.
+        $mission = null;
+        $storedLesson = null;
+
+        if ($parseError === null && ($structured['phase'] ?? null) === 'lesson') {
+            $missionDraft = is_array($structured['mission_draft'] ?? null) ? $structured['mission_draft'] : [];
+
+            $recorded = $recorder->record(
+                $user,
+                $workspace,
+                $missionDraft,
+                $validationWarnings === [] ? $lessonDraft : null,
+            );
+
+            ['workspace' => $workspace, 'mission' => $mission, 'lesson' => $storedLesson] = $recorded;
+            array_push($validationWarnings, ...$recorded['errors']);
+
+            if ($storedLesson !== null) {
+                ['lesson' => $lesson, 'terms' => $terms, 'resources' => $resources] = LessonResponse::for($storedLesson);
+            }
+        }
+
         return ApiResponse::success(
             'Teach turn completed.',
             [
                 'conversation_id' => $response->conversationId,
+                'workspace_id' => $workspace?->id,
+                'mission_id' => $mission?->id,
+                'lesson_id' => $storedLesson?->id,
                 'structured' => $structured,
                 'reply' => $structured['message'] ?? $rawText,
                 'phase' => $structured['phase'] ?? null,
