@@ -32,8 +32,10 @@ Route::middleware(['auth:sanctum'])->group(function() {
     Route::post('/lessons/{lesson}/attempts', [LessonAttemptController::class, 'store']);
 });
 
+// Practice routes for AI calls. Local only: any signed-in user could spend model credit
+// through them, and /test-gemini-raw lets the caller pick the model.
+if (app()->isLocal()) {
 Route::middleware(['auth:sanctum'])->group(function() {
-    // Practice test routes for AI calls
     Route::match(['get', 'post'], '/test-gemini-raw', GeminiTestController::class);
     Route::match(['get', 'post'], '/test-agent-oneshot', function (Request $request) {
 
@@ -278,5 +280,4 @@ Route::middleware(['auth:sanctum'])->group(function() {
         );
     });
 });
-
-
+}
