@@ -19,15 +19,74 @@ class ModelJson
 
         $decoded = json_decode($candidate, true);
 
-        if (! is_array($decoded)) {
-            $start = strpos($candidate, '{');
-            $end = strrpos($candidate, '}');
-
-            $decoded = $start !== false && $end > $start
-                ? json_decode(substr($candidate, $start, $end - $start + 1), true)
-                : null;
+        if (is_array($decoded) && ! array_is_list($decoded)) {
+            return $decoded;
         }
 
-        return is_array($decoded) && ! array_is_list($decoded) ? $decoded : null;
+        // The model sometimes appends one extra `}` after valid JSON, so the
+        // old first-`{`-to-last-`}` fallback decodes nothing: the extra brace is
+        // the last `}`. Scan string-aware for the first complete object instead.
+        foreach (self::balancedObjects($candidate) as $object) {
+            $decoded = json_decode($object, true);
+
+            if (is_array($decoded) && ! array_is_list($decoded)) {
+                return $decoded;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Every balanced `{...}` span starting from each opening brace, in order,
+     * with braces inside double-quoted strings (and `\"` escapes) ignored.
+     *
+     * @return list<string>
+     */
+    private static function balancedObjects(string $text): array
+    {
+        $objects = [];
+        $length = strlen($text);
+
+        for ($start = 0; $start < $length; $start++) {
+            if ($text[$start] !== '{') {
+                continue;
+            }
+
+            $depth = 0;
+            $inString = false;
+            $escaped = false;
+
+            for ($i = $start; $i < $length; $i++) {
+                $char = $text[$i];
+
+                if ($inString) {
+                    if ($escaped) {
+                        $escaped = false;
+                    } elseif ($char === '\\') {
+                        $escaped = true;
+                    } elseif ($char === '"') {
+                        $inString = false;
+                    }
+
+                    continue;
+                }
+
+                if ($char === '"') {
+                    $inString = true;
+                } elseif ($char === '{') {
+                    $depth++;
+                } elseif ($char === '}') {
+                    $depth--;
+
+                    if ($depth === 0) {
+                        $objects[] = substr($text, $start, $i - $start + 1);
+                        break;
+                    }
+                }
+            }
+        }
+
+        return $objects;
     }
 }

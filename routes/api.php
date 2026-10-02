@@ -2,6 +2,7 @@
 
 use App\Ai\Agents\TestAgent;
 use App\Ai\Agents\TestTeachAgent;
+use App\Ai\ModelJson;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
@@ -84,17 +85,28 @@ Route::middleware(['auth:sanctum'])->group(function() {
         $response = $agent->prompt($request->prompt);
 
         $rawText = $response->text;
-        $candidate = preg_replace('/^\s*```(?:json)?\s*|\s*```\s*$/i', '', trim($rawText));
+
+        // ModelJson recovers the first complete object string-aware, so one
+        // extra trailing `}` (or prose around the JSON) still parses. The
+        // plain decode below only supplies the syntax detail for the error.
+        $decoded = ModelJson::decode($rawText);
 
         $structured = null;
         $parseError = null;
 
-        try {
-            $decoded = json_decode($candidate, associative: true, flags: JSON_THROW_ON_ERROR);
-            $structured = is_array($decoded) && isset($decoded['message']) ? $decoded : null;
-            $parseError = $structured === null ? 'Response was valid JSON but lacked a message field.' : null;
-        } catch (\JsonException $e) {
-            $parseError = 'Response was not valid JSON: '.$e->getMessage();
+        if ($decoded === null) {
+            $parseError = 'Response was not valid JSON.';
+
+            try {
+                $candidate = preg_replace('/^\s*```(?:json)?\s*|\s*```\s*$/i', '', trim($rawText));
+                json_decode($candidate, associative: true, flags: JSON_THROW_ON_ERROR);
+            } catch (\JsonException $e) {
+                $parseError = 'Response was not valid JSON: '.$e->getMessage();
+            }
+        } elseif (! isset($decoded['message'])) {
+            $parseError = 'Response was valid JSON but lacked a message field.';
+        } else {
+            $structured = $decoded;
         }
 
         // Synthesize a frontend-shaped lesson contract from the AI draft.
