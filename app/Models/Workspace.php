@@ -39,7 +39,12 @@ class Workspace extends Model
 
     public function activeMission(): HasOne
     {
-        return $this->hasOne(Mission::class)->where('is_active', true)->latestOfMany();
+        // The constraint goes inside ofMany so the newest *active* row wins. A where() before
+        // latestOfMany() would pick the newest row of any status, then filter it out.
+        return $this->hasOne(Mission::class)->ofMany(
+            ['id' => 'max'],
+            fn ($query) => $query->where('is_active', true),
+        );
     }
 
     public function sources(): HasMany

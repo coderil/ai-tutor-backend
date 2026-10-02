@@ -157,6 +157,17 @@ it('returns 503 and stores nothing when the grader reply is unusable', function 
     $this->assertDatabaseCount('lesson_attempts', 0);
 });
 
+it('returns 503 and stores nothing when the grader call fails', function () {
+    RecallGrader::fake(fn () => throw new RuntimeException('Provider is down.'));
+    [$lesson] = attemptOn('review');
+
+    $this->postJson("/api/lessons/{$lesson->id}/attempts", ['answers' => [
+        ['type' => 'recall', 'recallId' => 'rc1', 'text' => 'Addition was done last.'],
+    ]])->assertServiceUnavailable();
+
+    $this->assertDatabaseCount('lesson_attempts', 0);
+});
+
 it('hides another learner\'s lesson behind a 404', function () {
     RecallGrader::fake()->preventStrayPrompts();
     $lesson = LessonFixtures::store(Workspace::factory()->create(), 'review');

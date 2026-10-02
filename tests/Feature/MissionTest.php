@@ -32,6 +32,16 @@ it('returns the active mission and never a superseded one', function () {
         ->assertJsonPath('data.success_criteria', ['Solve every problem on the sheet']);
 });
 
+it('returns the active mission when a newer revision is inactive', function () {
+    $workspace = Workspace::factory()->create();
+    $active = Mission::factory()->for($workspace)->create(['is_active' => true]);
+    Mission::factory()->for($workspace)->create(['is_active' => false]);
+
+    $this->actingAs($workspace->user)
+        ->getJson("/api/workspaces/{$workspace->id}/mission")
+        ->assertJsonPath('data.id', $active->id);
+});
+
 it('hides another learner\'s mission behind a 404', function () {
     $workspace = Workspace::factory()->create();
     Mission::factory()->for($workspace)->create();

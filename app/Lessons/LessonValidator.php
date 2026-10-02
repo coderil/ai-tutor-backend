@@ -80,6 +80,10 @@ class LessonValidator
             $this->contract->errors(['lesson' => $lesson]),
         );
 
+        if ($errors === []) {
+            return [];
+        }
+
         // The schema's oneOf over block types reports a bad block as "matches no block".
         // Checking each block against its own definition says what is actually wrong.
         foreach (LessonReferences::blocks($lesson) as $i => $block) {

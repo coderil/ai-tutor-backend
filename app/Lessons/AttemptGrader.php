@@ -6,6 +6,7 @@ use App\Ai\Agents\RecallGrader;
 use App\Ai\ModelJson;
 use App\Models\Lesson;
 use Illuminate\Validation\ValidationException;
+use Throwable;
 
 /**
  * Checks an attempt request against the contract and the lesson, then grades it. Quiz
@@ -152,9 +153,13 @@ class AttemptGrader
             return $grades;
         }
 
-        $reply = RecallGrader::make()->prompt(
-            "Grade these recall answers:\n".json_encode($toGrade, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
-        )->text;
+        try {
+            $reply = RecallGrader::make()->prompt(
+                "Grade these recall answers:\n".json_encode($toGrade, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES)
+            )->text;
+        } catch (Throwable $e) {
+            throw new GradingFailed('The grader call failed: '.$e->getMessage(), previous: $e);
+        }
 
         $results = collect(ModelJson::decode($reply)['results'] ?? [])
             ->filter(fn ($r) => is_array($r) && is_string($r['recallId'] ?? null))

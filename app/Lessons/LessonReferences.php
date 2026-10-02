@@ -53,15 +53,15 @@ class LessonReferences
     }
 
     /**
-     * Every block that is at least an array.
+     * Every block that is at least an array, keyed by its position in the lesson.
      *
      * @param  array<string, mixed>  $lesson
-     * @return list<array<string, mixed>>
+     * @return array<int, array<string, mixed>>
      */
     public static function blocks(array $lesson): array
     {
         $blocks = is_array($lesson['blocks'] ?? null) ? $lesson['blocks'] : [];
 
-        return array_values(array_filter($blocks, 'is_array'));
+        return array_filter($blocks, 'is_array');
     }
 }
