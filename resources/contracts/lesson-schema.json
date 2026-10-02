@@ -1,0 +1,533 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Maykiyel/ai-tutor-frontend/docs/lesson-schema.json",
+  "title": "AI tutor lesson contract",
+  "description": "Shared contract between the Laravel backend and the React frontend. This file is the single source of truth for the lesson format and the attempt contract. The backend validates against it before saving a lesson; the frontend parses against it (via Zod) before rendering. Prose descriptions of the lesson format live in docs/lesson-format.md and are not authoritative.",
+  "type": "object",
+  "required": ["lesson"],
+  "additionalProperties": false,
+  "properties": {
+    "lesson": { "$ref": "#/$defs/lesson" },
+    "terms": {
+      "description": "Glossary terms the lesson references, keyed by term id. The frontend never makes a second request for these.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/hydratedTerm" }
+    },
+    "resources": {
+      "description": "Sources the lesson cites, keyed by resource id. Named `resources` to match the wire format; the domain term is Source. See GLOSSARY.md.",
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/hydratedResource" }
+    }
+  },
+
+  "$defs": {
+    "lesson": {
+      "type": "object",
+      "required": [
+        "schemaVersion",
+        "number",
+        "kind",
+        "slug",
+        "title",
+        "skill",
+        "missionLink",
+        "minutes",
+        "blocks",
+        "primarySource"
+      ],
+      "additionalProperties": false,
+      "properties": {
+        "schemaVersion": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Tells the frontend when a lesson is newer than it understands. Bump only when old lessons would break. See ADR-0002."
+        },
+        "number": { "type": "integer", "minimum": 1 },
+        "kind": { "$ref": "#/$defs/lessonKind" },
+        "slug": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "title": { "type": "string", "minLength": 1 },
+        "skill": {
+          "type": "string",
+          "minLength": 1,
+          "description": "The single skill this lesson teaches."
+        },
+        "missionLink": {
+          "type": "string",
+          "minLength": 1,
+          "description": "How the lesson ties to the learner's mission, in the learner's terms."
+        },
+        "minutes": { "type": "integer", "minimum": 1, "maximum": 15 },
+        "blocks": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/$defs/block" }
+        },
+        "primarySource": {
+          "type": "object",
+          "required": ["resourceId", "why"],
+          "additionalProperties": false,
+          "properties": {
+            "resourceId": {
+              "type": "integer",
+              "description": "Must exist in the same workspace. The only source of truth: there is no primary_source_url column."
+            },
+            "why": { "type": "string", "minLength": 1 }
+          }
+        },
+        "related": {
+          "type": "object",
+          "additionalProperties": false,
+          "properties": {
+            "lessons": { "type": "array", "items": { "type": "integer" } },
+            "references": { "type": "array", "items": { "type": "integer" } }
+          },
+          "description": "Cross-references. Ids are lesson ids or reference doc ids, not database-wide ids."
+        }
+      }
+    },
+
+    "lessonKind": {
+      "enum": ["concept", "hands-on", "review"],
+      "description": "Sets which blocks are required, allowed, and forbidden. The recipe matrix is in docs/lesson-format.md."
+    },
+
+    "block": {
+      "type": "object",
+      "required": ["type"],
+      "description": "The `type` field is the only link between backend and UI. An unknown type must render nothing and be logged, never crash the page.",
+      "oneOf": [
+        { "$ref": "#/$defs/calloutBlock" },
+        { "$ref": "#/$defs/headingBlock" },
+        { "$ref": "#/$defs/paragraphBlock" },
+        { "$ref": "#/$defs/codeBlock" },
+        { "$ref": "#/$defs/figureBlock" },
+        { "$ref": "#/$defs/tableBlock" },
+        { "$ref": "#/$defs/stepsBlock" },
+        { "$ref": "#/$defs/quizBlock" },
+        { "$ref": "#/$defs/recallBlock" }
+      ]
+    },
+
+    "calloutBlock": {
+      "type": "object",
+      "required": ["type", "tone", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "callout" },
+        "tone": { "enum": ["win", "note", "watch-out"] },
+        "content": { "type": "array", "items": { "$ref": "#/$defs/segment" } }
+      }
+    },
+
+    "headingBlock": {
+      "type": "object",
+      "required": ["type", "level", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "heading" },
+        "level": { "enum": [2, 3] },
+        "text": { "type": "string" }
+      }
+    },
+
+    "paragraphBlock": {
+      "type": "object",
+      "required": ["type", "content"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "paragraph" },
+        "content": { "type": "array", "items": { "$ref": "#/$defs/segment" } }
+      }
+    },
+
+    "codeBlock": {
+      "type": "object",
+      "required": ["type", "language", "code"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "code" },
+        "language": {
+          "type": "string",
+          "description": "Syntax highlighting hint. Content is rendered as inert text and never evaluated. See ADR-0001."
+        },
+        "code": { "type": "string" }
+      }
+    },
+
+    "figureBlock": {
+      "type": "object",
+      "required": ["type", "kind", "source", "alt"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "figure" },
+        "kind": {
+          "enum": ["svg", "mermaid", "image"],
+          "description": "`svg` is inline markup and MUST be sanitized by the backend with enshrined/svg-sanitize >=0.22.0 before storage, then sanitized again by the frontend with DOMPurify. `mermaid` MUST run in strict mode. `image` is a url. See ADR-0001."
+        },
+        "source": {
+          "type": "string",
+          "description": "Inline markup source for svg and mermaid, or a url for image."
+        },
+        "alt": {
+          "type": "string",
+          "description": "Real alt text. Never empty, never a placeholder."
+        },
+        "caption": { "type": "string" }
+      }
+    },
+
+    "tableBlock": {
+      "type": "object",
+      "required": ["type", "headers", "rows"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "table" },
+        "headers": { "type": "array", "items": { "type": "string" } },
+        "rows": {
+          "type": "array",
+          "items": { "type": "array", "items": { "type": "string" } },
+          "description": "Each row must have the same length as `headers`."
+        }
+      }
+    },
+
+    "stepsBlock": {
+      "type": "object",
+      "required": ["type", "title", "items"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "steps" },
+        "title": { "type": "string" },
+        "items": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "instruction", "check"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^s[0-9]+$",
+                "description": "Lesson-scoped id. Sent back in the attempt."
+              },
+              "instruction": { "type": "string" },
+              "check": {
+                "type": "string",
+                "description": "How the learner knows the step is done. Displayed as a hint; not graded."
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "quizBlock": {
+      "type": "object",
+      "required": ["type", "questions"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "quiz" },
+        "questions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["id", "prompt", "options", "correctOptionId", "explanation"],
+            "additionalProperties": false,
+            "properties": {
+              "id": { "type": "string", "pattern": "^q[0-9]+$" },
+              "prompt": { "type": "string" },
+              "options": {
+                "type": "array",
+                "minItems": 3,
+                "maxItems": 4,
+                "items": {
+                  "type": "object",
+                  "required": ["id", "text", "feedback"],
+                  "additionalProperties": false,
+                  "properties": {
+                    "id": { "type": "string", "pattern": "^[a-z]$" },
+                    "text": { "type": "string" },
+                    "feedback": {
+                      "type": "string",
+                      "description": "Shown the moment the option is picked. This is what makes feedback instant, so options and explanations ship in the lesson."
+                    }
+                  }
+                },
+                "description": "Every option must have the same word count, so nothing gives the answer away. Validated backend-side with a custom rule."
+              },
+              "correctOptionId": {
+                "type": "string",
+                "description": "Must match one of the option ids."
+              },
+              "explanation": { "type": "string" },
+              "tests": {
+                "type": "array",
+                "items": { "type": "integer" },
+                "description": "Optional ids of source sections or external references."
+              }
+            }
+          }
+        }
+      }
+    },
+
+    "recallBlock": {
+      "type": "object",
+      "required": ["type", "id", "prompt"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "recall" },
+        "id": { "type": "string", "pattern": "^rc[0-9]+$" },
+        "prompt": { "type": "string" },
+        "modelAnswer": {
+          "type": "string",
+          "description": "Stored with the lesson, STRIPPED from the lesson response, and returned in the attempt result. Never present in a GET /lessons/{id} response."
+        },
+        "rubric": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Stored with the lesson, STRIPPED from the lesson response, and returned in the attempt result."
+        }
+      },
+      "description": "The lesson response form omits modelAnswer and rubric. Use the attempt result definition for those."
+    },
+
+    "segment": {
+      "type": "object",
+      "required": ["type"],
+      "description": "Inline content inside a paragraph or callout. Rendered as React text; never injected as HTML.",
+      "oneOf": [
+        { "$ref": "#/$defs/textSegment" },
+        { "$ref": "#/$defs/inlineCodeSegment" },
+        { "$ref": "#/$defs/termSegment" },
+        { "$ref": "#/$defs/citeSegment" },
+        { "$ref": "#/$defs/linkSegment" }
+      ]
+    },
+
+    "textSegment": {
+      "type": "object",
+      "required": ["type", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "text" },
+        "text": { "type": "string" }
+      }
+    },
+
+    "inlineCodeSegment": {
+      "type": "object",
+      "required": ["type", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "code" },
+        "text": {
+          "type": "string",
+          "description": "Inline code, almost always a single identifier. No language field: a language hint on a one-word span has no use. The `code` block carries `language` where it matters."
+        }
+      }
+    },
+
+    "termSegment": {
+      "type": "object",
+      "required": ["type", "termId", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "term" },
+        "termId": {
+          "type": "integer",
+          "description": "Must exist in the same workspace's glossary. A term the learner has not demonstrated yet appears as plain text and becomes a candidate only after correct use."
+        },
+        "text": { "type": "string", "description": "The term as written in this lesson." }
+      }
+    },
+
+    "citeSegment": {
+      "type": "object",
+      "required": ["type", "resourceId", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "cite" },
+        "resourceId": {
+          "type": "integer",
+          "description": "Must exist in the same workspace, and its url must resolve."
+        },
+        "text": { "type": "string" }
+      }
+    },
+
+    "linkSegment": {
+      "type": "object",
+      "required": ["type", "to", "targetId", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "link" },
+        "to": {
+          "enum": ["lesson", "reference"],
+          "description": "Decides whether the frontend builds a router link or renders plain text."
+        },
+        "targetId": {
+          "type": "integer",
+          "description": "A lesson id or reference doc id, per `to`."
+        },
+        "text": { "type": "string" }
+      }
+    },
+
+    "hydratedTerm": {
+      "type": "object",
+      "required": ["term", "definition"],
+      "additionalProperties": false,
+      "properties": {
+        "term": { "type": "string" },
+        "definition": { "type": "string" },
+        "avoid": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Aliases the learner should not use."
+        }
+      }
+    },
+
+    "hydratedResource": {
+      "type": "object",
+      "required": ["title", "url"],
+      "additionalProperties": false,
+      "properties": {
+        "title": {
+          "type": "string",
+          "description": "Required. A citation without a title is unusable in the lesson renderer, so the resources table carries a title column."
+        },
+        "url": { "type": "string", "description": "Must be http or https." }
+      }
+    },
+
+    "attemptRequest": {
+      "type": "object",
+      "required": ["answers"],
+      "additionalProperties": false,
+      "properties": {
+        "answers": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/answer" }
+        }
+      },
+      "description": "Posted to POST /lessons/{id}/attempts. A discriminated union: `type` says which variant it is, so a blank recall is never mistaken for a malformed quiz answer. An omitted answer means skipped and is excluded from grading."
+    },
+
+    "answer": {
+      "oneOf": [
+        { "$ref": "#/$defs/quizAnswer" },
+        { "$ref": "#/$defs/recallAnswer" },
+        { "$ref": "#/$defs/stepsAnswer" }
+      ]
+    },
+
+    "quizAnswer": {
+      "type": "object",
+      "required": ["type", "questionId", "optionId"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "quiz" },
+        "questionId": { "type": "string", "pattern": "^q[0-9]+$" },
+        "optionId": { "type": "string", "pattern": "^[a-z]$" }
+      }
+    },
+
+    "recallAnswer": {
+      "type": "object",
+      "required": ["type", "recallId", "text"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "recall" },
+        "recallId": { "type": "string", "pattern": "^rc[0-9]+$" },
+        "text": { "type": "string" }
+      }
+    },
+
+    "stepsAnswer": {
+      "type": "object",
+      "required": ["type", "stepId", "done"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "const": "steps" },
+        "stepId": { "type": "string", "pattern": "^s[0-9]+$" },
+        "done": { "type": "boolean" }
+      },
+      "description": "Ungraded telemetry. Steps contribute nothing to any aggregate and get no perAnswer entry. Feedback for a hands-on lesson comes from its recall block."
+    },
+
+    "attemptResult": {
+      "type": "object",
+      "required": ["perAnswer"],
+      "additionalProperties": false,
+      "properties": {
+        "perAnswer": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/perAnswer" },
+          "description": "There is no `score` field. Any aggregate is computed by the frontend from perAnswer, because a single number two repositories must agree on is a number that eventually disagrees."
+        },
+        "recordCandidate": {
+          "oneOf": [{ "$ref": "#/$defs/recordCandidate" }, { "type": "null" }],
+          "description": "Null unless the answers show real understanding. The backend decides; the frontend never decides what becomes a record."
+        },
+        "glossaryCandidates": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/glossaryCandidate" }
+        }
+      }
+    },
+
+    "perAnswer": {
+      "type": "object",
+      "required": ["type", "id", "correct", "feedback"],
+      "additionalProperties": false,
+      "properties": {
+        "type": { "enum": ["quiz", "recall"] },
+        "id": {
+          "type": "string",
+          "description": "The questionId or recallId from the request. Named to match the request rather than an opaque `ref`."
+        },
+        "correct": { "type": "boolean" },
+        "feedback": { "type": "string" }
+      },
+      "description": "No steps entries ever appear here."
+    },
+
+    "recordCandidate": {
+      "type": "object",
+      "required": ["title", "body", "evidence"],
+      "additionalProperties": false,
+      "properties": {
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "evidence": {
+          "type": "string",
+          "description": "What in the answers supports this. A candidate with no evidence is discarded."
+        }
+      }
+    },
+
+    "glossaryCandidate": {
+      "type": "object",
+      "required": ["term", "learnerDefinition"],
+      "additionalProperties": false,
+      "properties": {
+        "term": {
+          "type": "string",
+          "description": "The proposed term text. A term that does not exist yet has no id, so candidates carry the text, not an id."
+        },
+        "learnerDefinition": {
+          "type": "string",
+          "description": "The learner's own definition. Writing it is the evidence that they understand the term."
+        },
+        "termId": {
+          "type": "integer",
+          "description": "Present ONLY when the candidate updates a term that already exists in the workspace glossary. Omit for a new term."
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "lesson": {
+    "schemaVersion": 1,
+    "number": 4,
+    "kind": "hands-on",
+    "slug": "setting-up-the-practice-set",
+    "title": "Setting up the practice set",
+    "skill": "Set up one equation for a problem you actually have to solve, before trying to solve it.",
+    "missionLink": "This is the first fifteen minutes of the Friday deadline. Everything after it is faster if you do this part first.",
+    "minutes": 12,
+    "primarySource": {
+      "resourceId": 12,
+      "why": "Same method as the concept lesson, at practice pace."
+    },
+    "blocks": [
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Name the unknown first"
+      },
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "A hands-on lesson is a checklist, not an explanation. Work down it with your actual problem set open, and tick each step as you go."
+          },
+          {
+            "type": "text",
+            "text": " The steps follow "
+          },
+          {
+            "type": "cite",
+            "resourceId": 12,
+            "text": "the worked examples"
+          },
+          {
+            "type": "text",
+            "text": "."
+          }
+        ]
+      },
+      {
+        "type": "steps",
+        "title": "Set up problem one, end to end",
+        "items": [
+          {
+            "id": "s1",
+            "instruction": "Copy problem one onto a clean page and write the sentence it is actually about.",
+            "check": "You have one written sentence in front of you that does not contain an equals sign."
+          },
+          {
+            "id": "s2",
+            "instruction": "Name the unknown with one letter, and write what it measures underneath.",
+            "check": "A single letter and a plain phrase sit next to each other, and the letter appears in no other role."
+          },
+          {
+            "id": "s3",
+            "instruction": "Write the equation both ways round, once for each way you could read it.",
+            "check": "Two equations, and at least one of them has the unknown on both sides."
+          },
+          {
+            "id": "s4",
+            "instruction": "Say the equation out loud as a sentence about the quantities.",
+            "check": "You can say it without reading it, and what you say sounds like arithmetic rather than like a formula."
+          }
+        ]
+      },
+      {
+        "type": "callout",
+        "tone": "watch-out",
+        "content": [
+          {
+            "type": "text",
+            "text": "If your equation needs the unknown on both sides, stop. Go back to the word problem: there is usually a second unknown you have not named."
+          }
+        ]
+      },
+      {
+        "type": "code",
+        "language": "python",
+        "code": "def set_up(total: float, each: float) -> str:\n    \"\"\"Say the problem as a sentence before you write any symbols on it.\"\"\"\n    count = total / each\n    if each <= 0 or count != int(count):\n        raise ValueError(f'{each:g} does not divide {total:g} evenly, so this page is not set up yet')\n    return f'{count:g} groups of {each:g} make {total:g}'\n\n\ndef read_it_back(total: float, each: float) -> str:\n    return f'{total:g} split into groups of {each:g} is {int(total / each):d} groups, and no symbols were needed to say it.'"
+      },
+      {
+        "type": "callout",
+        "tone": "win",
+        "content": [
+          {
+            "type": "text",
+            "text": "An equation you can say out loud in plain words is an equation you can solve. If you cannot, it is not finished."
+          }
+        ]
+      },
+      {
+        "type": "recall",
+        "id": "rc1",
+        "prompt": "In your own words, why does the sentence come before the equation?",
+        "modelAnswer": "Writing the sentence first fixes what the unknown measures. The equation is then a translation of that sentence, so a wrong equation shows up as a sentence that no longer matches the problem.",
+        "rubric": [
+          "Says the sentence pins down what the unknown is",
+          "Says the equation translates the sentence"
+        ]
+      }
+    ]
+  },
+  "terms": {},
+  "resources": {
+    "12": {
+      "title": "Two-step equations, worked slowly",
+      "url": "https://example.org/two-step-equations"
+    }
+  }
+}

@@ -1,6 +1,8 @@
 <?php
 
+use App\Lessons\LessonContract;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 use App\Models\User;
 use Spatie\Permission\Models\Role;
@@ -45,6 +47,17 @@ expect()->extend('toBeOne', function () {
 | global functions to help you to reduce the number of lines of code in your test files.
 |
 */
+
+/**
+ * Assert a response body's `data` satisfies the lesson contract: the root schema (the
+ * lesson response) when $definition is null, otherwise the named definition.
+ */
+function expectMatchesContract(TestResponse $response, ?string $definition = null): void
+{
+    $data = json_decode($response->getContent(), false, flags: JSON_THROW_ON_ERROR)->data;
+
+    expect((new LessonContract)->errors($data, $definition))->toBe([]);
+}
 
 function loginAs(string $role): User
 {

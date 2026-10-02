@@ -1,0 +1,169 @@
+{
+  "lesson": {
+    "schemaVersion": 1,
+    "number": 5,
+    "kind": "review",
+    "slug": "reviewing-two-step-equations",
+    "title": "Reviewing two-step equations",
+    "skill": "Recall the rule that keeps an equation true, without looking it up.",
+    "missionLink": "You are close to the Friday deadline. This is the check that tells you whether the two lessons before it stuck.",
+    "minutes": 6,
+    "primarySource": {
+      "resourceId": 12,
+      "why": "Worth one more read if the recall below comes back empty."
+    },
+    "blocks": [
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Before you answer"
+      },
+      {
+        "type": "callout",
+        "tone": "note",
+        "content": [
+          {
+            "type": "text",
+            "text": "Answer from memory first. Looking back at lesson three afterwards is how you find out what you actually kept."
+          },
+          {
+            "type": "text",
+            "text": " If you get stuck, reread "
+          },
+          {
+            "type": "cite",
+            "resourceId": 12,
+            "text": "the worked examples"
+          },
+          {
+            "type": "text",
+            "text": "."
+          }
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "What this lesson does not repeat"
+      },
+      {
+        "type": "callout",
+        "tone": "watch-out",
+        "content": [
+          {
+            "type": "text",
+            "text": "A review introduces no new explanation. If something here is unfamiliar, it belongs to an earlier lesson, not to this one."
+          }
+        ]
+      },
+      {
+        "type": "callout",
+        "tone": "win",
+        "content": [
+          {
+            "type": "text",
+            "text": "Getting a recall answer roughly right counts. The point is to find the gaps, not to pass."
+          }
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Pick your way back to it"
+      },
+      {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "prompt": "Which step comes first when you solve 2x + 3 = 11?",
+            "options": [
+              {
+                "id": "a",
+                "text": "Add four to both sides",
+                "feedback": "That is the second move. It only works once the 3 is off both sides."
+              },
+              {
+                "id": "b",
+                "text": "Subtract three from both sides",
+                "feedback": "Exactly that. Take the 3 off first and the term x is left standing alone."
+              },
+              {
+                "id": "c",
+                "text": "Divide both sides by two",
+                "feedback": "You cannot divide yet, because there is still a 3 sitting on top of x."
+              }
+            ],
+            "correctOptionId": "b",
+            "explanation": "Undo addition before you undo multiplication. Doing it the other way round changes what the 2 is multiplying."
+          },
+          {
+            "id": "q2",
+            "prompt": "Your answer does not check out when you put it back in. What do you check first?",
+            "options": [
+              {
+                "id": "a",
+                "text": "Whether every step was reversible",
+                "feedback": "Yes. Every step has to be reversible, or the equation changed meaning somewhere."
+              },
+              {
+                "id": "b",
+                "text": "Whether the answer is whole",
+                "feedback": "Whether the answer is a whole number is worth knowing, but it comes after this."
+              },
+              {
+                "id": "c",
+                "text": "Whether both sides still match",
+                "feedback": "They should match. If they do not, the mistake is earlier than the last line."
+              }
+            ],
+            "correctOptionId": "a",
+            "explanation": "Check that every step was reversible, then put the answer back on both sides."
+          }
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Now say it back, from memory"
+      },
+      {
+        "type": "recall",
+        "id": "rc1",
+        "prompt": "In your own words, why do you undo addition before you undo multiplication?",
+        "modelAnswer": "Addition was applied last, so it is undone first. Undoing multiplication first would change what the coefficient multiplies.",
+        "rubric": [
+          "Says addition is undone first",
+          "Gives the reverse-order reason"
+        ]
+      },
+      {
+        "type": "recall",
+        "id": "rc2",
+        "prompt": "In your own words, what makes a step reversible?",
+        "modelAnswer": "A step is reversible when it does the same operation to both sides with something other than zero, so you can always undo it and get the original equation back.",
+        "rubric": [
+          "Same operation on both sides",
+          "Not multiplying or dividing by zero"
+        ]
+      },
+      {
+        "type": "recall",
+        "id": "rc3",
+        "prompt": "In your own words, what do you do when both sides stop matching?",
+        "modelAnswer": "Go back through the steps and find the first one that was not applied to both sides, then redo from there.",
+        "rubric": [
+          "Checks each step was applied to both sides",
+          "Redoes the work from the first bad step"
+        ]
+      }
+    ]
+  },
+  "terms": {},
+  "resources": {
+    "12": {
+      "title": "Two-step equations, worked slowly",
+      "url": "https://example.org/two-step-equations"
+    }
+  }
+}

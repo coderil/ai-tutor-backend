@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GeminiTestController;
+use App\Http\Controllers\LessonController;
 use App\Http\Controllers\MissionController;
 use App\Http\Controllers\WorkspaceController;
 use Illuminate\Support\Facades\Auth;
@@ -24,6 +25,8 @@ Route::middleware(['auth:sanctum'])->group(function() {
     Route::post('/workspaces', [WorkspaceController::class, 'store']);
     Route::get('/workspaces/{workspace}', [WorkspaceController::class, 'show']);
     Route::get('/workspaces/{workspace}/mission', [MissionController::class, 'show']);
+    Route::get('/workspaces/{workspace}/lessons', [LessonController::class, 'index']);
+    Route::get('/lessons/{lesson}', [LessonController::class, 'show']);
 });
 
 Route::middleware(['auth:sanctum'])->group(function() {

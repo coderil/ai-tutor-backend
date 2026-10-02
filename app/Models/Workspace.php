@@ -41,4 +41,14 @@ class Workspace extends Model
     {
         return $this->hasOne(Mission::class)->where('is_active', true)->latestOfMany();
     }
+
+    public function sources(): HasMany
+    {
+        return $this->hasMany(Source::class);
+    }
+
+    public function lessons(): HasMany
+    {
+        return $this->hasMany(Lesson::class);
+    }
 }

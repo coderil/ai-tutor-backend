@@ -1,0 +1,153 @@
+{
+  "lesson": {
+    "schemaVersion": 1,
+    "number": 3,
+    "kind": "concept",
+    "slug": "solving-two-step-equations",
+    "title": "Solving two-step equations",
+    "skill": "Solve an equation that needs two operations, and say why the order does not change the answer.",
+    "missionLink": "Your mission is to get through the practice set before Friday. Almost every problem in it needs this one move.",
+    "minutes": 8,
+    "primarySource": {
+      "resourceId": 12,
+      "why": "It works one equation at a time, which is the pace you read at."
+    },
+    "blocks": [
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "One operation, both sides"
+      },
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "An equation is a claim that two things are equal. To keep it true, every operation you do to one side has to happen to the other. That is the whole rule, and everything else in this lesson is an application of it."
+          },
+          {
+            "type": "text",
+            "text": " The rule is worked through one equation at a time in "
+          },
+          {
+            "type": "cite",
+            "resourceId": 12,
+            "text": "the worked examples"
+          },
+          {
+            "type": "text",
+            "text": "."
+          }
+        ]
+      },
+      {
+        "type": "callout",
+        "tone": "note",
+        "content": [
+          {
+            "type": "text",
+            "text": "Undo addition before multiplication. You are peeling the equation back to the variable, and the last thing you wrapped on is the first thing you take off."
+          }
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 3,
+        "text": "Work backwards from the answer"
+      },
+      {
+        "type": "paragraph",
+        "content": [
+          {
+            "type": "text",
+            "text": "If you know the answer, start from it. Reaching for the "
+          },
+          {
+            "type": "text",
+            "text": "inverse operation"
+          },
+          {
+            "type": "text",
+            "text": " of each step is faster than working forwards, because each step gives you exactly one thing to undo. The result is the same either way."
+          }
+        ]
+      },
+      {
+        "type": "code",
+        "language": "python",
+        "code": "def solve(two_step: str) -> float:\n    # 3x + 5 = 20\n    value = two_step.split('=')[1]\n    value = float(value) - 5\n    return value / 3\n\n\nprint(solve('3x + 5 = 20'))  # 5.0\n# <script>alert('never markup')</script> is inert text, not markup"
+      },
+      {
+        "type": "callout",
+        "tone": "win",
+        "content": [
+          {
+            "type": "text",
+            "text": "You can check any answer by putting it back in. If both sides come out the same, it was right."
+          }
+        ]
+      },
+      {
+        "type": "callout",
+        "tone": "watch-out",
+        "content": [
+          {
+            "type": "text",
+            "text": "Subtracting on one side only breaks the equation. It stops being a claim that two things are equal and starts being two unrelated numbers."
+          }
+        ]
+      },
+      {
+        "type": "heading",
+        "level": 2,
+        "text": "Check it"
+      },
+      {
+        "type": "quiz",
+        "questions": [
+          {
+            "id": "q1",
+            "prompt": "Which step comes first when you solve 2x + 3 = 11?",
+            "options": [
+              {
+                "id": "a",
+                "text": "Add four to both sides",
+                "feedback": "That is the second move. It only works once the 3 is off both sides."
+              },
+              {
+                "id": "b",
+                "text": "Subtract three from both sides",
+                "feedback": "Exactly that. Take the 3 off first and the term x is left standing alone."
+              },
+              {
+                "id": "c",
+                "text": "Divide both sides by two",
+                "feedback": "You cannot divide yet, because there is still a 3 sitting on top of x."
+              }
+            ],
+            "correctOptionId": "b",
+            "explanation": "Undo addition before you undo multiplication. Doing it the other way round changes what the 2 is multiplying."
+          }
+        ]
+      },
+      {
+        "type": "recall",
+        "id": "rc1",
+        "prompt": "In your own words, why do you undo addition before multiplication?",
+        "modelAnswer": "Addition was the last thing wrapped around the variable, so it is the first thing to take off. Undoing it first leaves a single multiplication, which one division removes.",
+        "rubric": [
+          "Says addition is undone first",
+          "Explains it as reversing the order the operations were applied",
+          "Mentions doing the same operation to both sides"
+        ]
+      }
+    ]
+  },
+  "terms": {},
+  "resources": {
+    "12": {
+      "title": "Two-step equations, worked slowly",
+      "url": "https://example.org/two-step-equations"
+    }
+  }
+}
