@@ -26,6 +26,7 @@ Route::middleware(['auth:sanctum'])->group(function() {
     Route::get('/workspaces/{workspace}', [WorkspaceController::class, 'show']);
     Route::get('/workspaces/{workspace}/mission', [MissionController::class, 'show']);
     Route::get('/workspaces/{workspace}/lessons', [LessonController::class, 'index']);
+    Route::post('/workspaces/{workspace}/lessons/next', [LessonController::class, 'next']);
     Route::get('/lessons/{lesson}', [LessonController::class, 'show']);
 });
 

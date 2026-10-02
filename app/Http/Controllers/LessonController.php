@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\ErrorCode;
+use App\Jobs\GenerateLesson;
 use App\Lessons\LessonResponse;
 use App\Models\Lesson;
 use App\Support\ApiResponse;
@@ -28,6 +30,29 @@ class LessonController extends Controller
         ]);
 
         return ApiResponse::success('Lessons retrieved.', $lessons);
+    }
+
+    /**
+     * Request next lesson
+     *
+     * Queues the workspace's next lesson and returns 202. The lesson list is the only signal
+     * that it arrived. A second request while one is queued or running queues nothing.
+     */
+    public function next(Request $request, string $workspace)
+    {
+        $workspace = $request->user()->workspaces()->findOrFail($workspace);
+
+        if ($workspace->activeMission === null) {
+            return ApiResponse::error(
+                'The workspace needs an active mission before it can have lessons.',
+                ErrorCode::CONFLICT->value,
+                409,
+            );
+        }
+
+        GenerateLesson::dispatch($workspace);
+
+        return ApiResponse::success('Lesson requested.', null, 202);
     }
 
     /**
