@@ -22,7 +22,7 @@ class UserSeeder extends Seeder
 
         User::create([
             'username' => self::USERNAME,
-            'password' => 'aikopo'
+            'password' => 'aikopo',
         ]);
     }
 }
